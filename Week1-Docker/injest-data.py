@@ -16,12 +16,11 @@ def main(params):
     engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
     engine.connect()
 
-    df = pd.read_csv(url, nrows = 100)
-
+    df_iter = pd.read_csv(url, iterator=True, chunksize=100000)
+    df = next(df_iter)
+    
     df['tpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'])
     df['tpep_dropoff_datetime'] = pd.to_datetime(df['tpep_dropoff_datetime'])
-
-    df_iter = pd.read_csv(url, iterator=True, chunksize=100000)
 
     df.head(n = 0).to_sql(name=table_name, con=engine, if_exists='replace')
 
@@ -44,7 +43,7 @@ def main(params):
     
 
 
- if __name__ == '__main__':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Injest CSV data to Postgres.')
 
     #user, password, host , port , database name, table name, url of the csv
@@ -54,7 +53,7 @@ def main(params):
     parser.add_argument('--host',   help='host for postgres')
     parser.add_argument('--port',   help='port for postgres')
     parser.add_argument('--db',   help='database name for postgres')
-    parser.add_argument('--table-name',   help='name of the table where we will write to')
+    parser.add_argument('--table_name',   help='name of the table where we will write to')
     parser.add_argument('--url',   help='url of the csv file ')
 
     args = parser.parse_args()

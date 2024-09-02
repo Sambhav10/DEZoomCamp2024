@@ -1,8 +1,8 @@
 
-# creating a docker network
+##### creating a docker network
 docker network create pg-network
 
-#  Ingesting NY Taxi Data to Postgres 
+######  Ingesting NY Taxi Data to Postgres (CLI)
 
 docker run -it \
  -e POSTGRES_USER="root" \
@@ -14,27 +14,36 @@ docker run -it \
   --name pg-database \
  postgres:13
 
+####### pgadmin (Admin -Interface)
+ docker run -it \
+  -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
+  -e PGADMIN_DEFAULT_PASSWORD="root" \
+  -p 8080:80 \
+  --network=pg-network \
+  --name pg-admin \
+  dpage/pgadmin4
 
 
+######Using a script to injest the data in postgres
 
-#using a script to injest the data in postgres
 
-URL="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
-
-python ingest_data.py \
+python injest-data.py \
   --user=root \
   --password=root \
   --host=localhost \
   --port=5432 \
   --db=ny_taxi \
   --table_name=yellow_taxi_trips \
-  --url=${URL}
+  --url="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
 
 
 
+#### buliding a image 
+ docker build -t taxi_ingest:v001 .
 
 
 
+## running the image to build a container
 docker run -it \
   --network=pg-network \
   taxi_ingest:v001 \
@@ -44,6 +53,27 @@ docker run -it \
     --port=5432 \
     --db=ny_taxi \
     --table_name=yellow_taxi_trips \
-    --url=${URL}
+    --url="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
 
+
+
+#### 
+Note- using the network name -pg-network didn't populate the table because of the different network names between docker-compose and
+the inject script
+Hence I had to look up the docker compose network file using the cmd - docker network ls 
+which was week1-docker_default 
+Then I re-ran the injest script with week1-docker_default as the network name. 
+
+###
+
+docker run -it \
+  --network=week1-docker_default \
+  taxi_ingest:v001 \
+    --user=root \
+    --password=root \
+    --host=pg-database \
+    --port=5432 \
+    --db=ny_taxi \
+    --table_name=yellow_taxi_trips \
+    --url="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
 
